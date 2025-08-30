@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Развивающие игры для малышей</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: var(--tg-theme-text-color, #000);
+        }
+        
+        .age-badge {
+            background: var(--tg-theme-button-color, #007aff);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            display: inline-block;
+        }
+        
+        .activities-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .activity-card {
+            background: var(--tg-theme-secondary-bg-color, #f1f1f1);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--tg-theme-section-separator-color, #e1e1e1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .activity-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .activity-card.premium {
+            opacity: 0.6;
+            position: relative;
+        }
+        
+        .activity-card.premium::after {
+            content: "💎 ПРЕМИУМ";
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ffd700;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .activity-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--tg-theme-text-color, #000);
+        }
+        
+        .activity-description {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #999);
+            margin-bottom: 10px;
+        }
+        
+        .activity-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--tg-theme-hint-color, #999);
+        }
+        
+        .activity-duration {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .activity-props {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .prop-badge {
+            background: var(--tg-theme-button-color, #007aff);
+            color: var(--tg-theme-button-text-color, #fff);
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+        }
+        
+        .premium-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .premium-banner h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .premium-banner p {
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+        
+        .premium-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .premium-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--tg-theme-hint-color, #999);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: var(--tg-theme-bg-color, #fff);
+            max-width: 480px;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 12px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--tg-theme-hint-color, #999);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 Развивающие игры</h1>
+            <div class="age-badge">👶 1-2 года</div>
+        </div>
+        
+        <div id="premium-banner" class="premium-banner" style="display: none;">
+            <h3>🌟 Премиум доступ</h3>
+            <p>Получите доступ ко всем активностям и функциям</p>
+            <button class="premium-btn" onclick="openPremium()">
+                Оформить подписку
+            </button>
+        </div>
+        
+        <div class="loading" id="loading">
+            ⏳ Загружаем активности...
+        </div>
+        
+        <div class="activities-grid" id="activities-grid" style="display: none;">
+            <!-- Активности будут загружены динамически -->
+        </div>
+    </div>
+    
+    <!-- Модальное окно для активности -->
+    <div class="modal" id="activity-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Активность</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modal-body">
+                <!-- Контент активности -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        
+        // Получение параметров пользователя
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('user_id') || tg.initDataUnsafe?.user?.id;
+        const isPremium = window.location.pathname.includes('premium');
+        
+        // Демо активности для MVP
+        const demoActivities = [
+            {
+                id: 1,
+                title: "Пальчиковая гимнастика «Сорока»",
+                description: "Классическая игра для развития мелкой моторики",
+                duration: 5,
+                requires_device: false,
+                requires_props: false,
+                is_premium: false,
+                category: "physical",
+                content: {
+                    instructions: `
+                        <h4>🤚 Как играть:</h4>
+                        <p>1. Посадите малыша к себе на колени</p>
+                        <p>2. Возьмите его ладошку в свою руку</p>
+                        <p>3. Водите пальчиком по ладошке и говорите:</p>
+                        <blockquote>"Сорока-ворона кашу варила, деток кормила..."</blockquote>
+                        <p>4. Загибайте пальчики по очереди</p>
+                        
+                        <h4>🎯 Развивает:</h4>
+                        <ul>
+                            <li>Мелкую моторику</li>
+                            <li>Речь и память</li>
+                            <li>Тактильные ощущения</li>
+                        </ul>
+                    `
+                }
+            },
+            {
+                id: 2,
+                title: "Игра с мячиком",
+                description: "Катание мяча для развития координации",
+                duration: 10,
+                requires_device: false,
+                requires_props: true,
+                is_premium: false,
+                category: "physical",
+                content: {
+                    instructions: `
+                        <h4>⚽ Что понадобится:</h4>
+                        <p>• Мягкий мяч среднего размера</p>
+                        
+                        <h4>🎮 Как играть:</h4>
+                        <p>1. Сядьте на пол напротив ребенка</p>
+                        <p>2. Катайте мяч друг другу</p>
+                        <p>3. Говорите: "Лови мячик!", "Кати мячик!"</p>
+                        <p>4. Хвалите за каждую попытку</p>
+                        
+                        <h4>🎯 Развивает:</h4>
+                        <ul>
+                            <li>Координацию движений</li>
+                            <li>Понимание речи</li>
+                            <li>Социальное взаимодействие</li>
+                        </ul>
+                    `
+                }
+            },
+            {
+                id: 3,
+                title: "Изучаем животных",
+                description: "Интерактивная игра с звуками животных",
+                duration: 8,
+                requires_device: true,
+                requires_props: false,
+                is_premium: false,
+                category: "cognitive",
+                content: {
+                    instructions: `
+                        <h4>📱 Интерактивная игра</h4>
+                        <div id="animals-game">
+                            <div class="animal-card" onclick="playAnimalSound('cow')">
+                                <div style="font-size: 60px;">🐄</div>
+                                <p><strong>Корова</strong></p>
+                                <p>Нажми и послушай!</p>
+                            </div>
+                        </div>
+                        
+                        <h4>🎯 Развивает:</h4>
+                        <ul>
+                            <li>Познавательные способности</li>
+                            <li>Слуховое восприятие</li>
+                            <li>Словарный запас</li>
+                        </ul>
+                    `
+                }
+            },
+            // Премиум активности
+            {
+                id: 4,
+                title: "Музыкальные инструменты",
+                description: "Изучаем звуки разных инструментов",
+                duration: 12,
+                requires_device: true,
+                requires_props: false,
+                is_premium: true,
+                category: "creative"
+            },
+            {
+                id: 5,
+                title: "Сортировка по цветам",
+                description: "Игра с разноцветными предметами",
+                duration: 15,
+                requires_device: false,
+                requires_props: true,
+                is_premium: true,
+                category: "cognitive"
+            }
+        ];
+        
+        // Инициализация приложения
+        async function initApp() {
+            try {
+                // Проверяем статус подписки
+                const hasAccess = await checkPremiumAccess();
+                
+                // Показываем активности
+                renderActivities(hasAccess);
+                
+                // Показываем баннер премиума если нет доступа
+                if (!hasAccess && !isPremium) {
+                    document.getElementById('premium-banner').style.display = 'block';
+                }
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('activities-grid').style.display = 'grid';
+                
+            } catch (error) {
+                console.error('Init error:', error);
+                document.getElementById('loading').innerHTML = '❌ Ошибка загрузки';
+            }
+        }
+        
+        async function checkPremiumAccess() {
+            if (isPremium) return true;
+            
+            try {
+                const response = await fetch(`/api/subscription/${userId}`);
+                const data = await response.json();
+                return data.hasPremium;
+            } catch (error) {
+                console.error('Error checking premium access:', error);
+                return false;
+            }
+        }
+        
+        function renderActivities(hasAccess) {
+            const grid = document.getElementById('activities-grid');
+            grid.innerHTML = '';
+            
+            const availableActivities = hasAccess 
+                ? demoActivities 
+                : demoActivities.filter(activity => !activity.is_premium);
+            
+            availableActivities.forEach(activity => {
+                const card = createActivityCard(activity, hasAccess);
+                grid.appendChild(card);
+            });
+            
+            // Показываем заблокированные активности для демонстрации
+            if (!hasAccess) {
+                const premiumActivities = demoActivities.filter(activity => activity.is_premium);
+                premiumActivities.forEach(activity => {
+                    const card = createActivityCard(activity, false);
+                    card.classList.add('premium');
+                    grid.appendChild(card);
+                });
+            }
+        }
+        
+        function createActivityCard(activity, hasAccess) {
+            const card = document.createElement('div');
+            card.className = 'activity-card';
+            
+            const canAccess = hasAccess || !activity.is_premium;
+            
+            card.innerHTML = `
+                <div class="activity-title">${activity.title}</div>
+                <div class="activity-description">${activity.description}</div>
+                <div class="activity-meta">
+                    <div class="activity-duration">
+                        ⏰ ${activity.duration} мин
+                    </div>
+                    <div class="activity-props">
+                        ${activity.requires_device ? '<span class="prop-badge">📱 Устройство</span>' : ''}
+                        ${activity.requires_props ? '<span class="prop-badge">🎯 Реквизит</span>' : ''}
+                        ${activity.is_premium ? '<span class="prop-badge" style="background: #ffd700; color: #000;">💎 Премиум</span>' : ''}
+                    </div>
+                </div>
+            `;
+            
+            card.addEventListener('click', () => {
+                if (canAccess) {
+                    openActivity(activity);
+                } else {
+                    openPremium();
+                }
+            });
+            
+            return card;
+        }
+        
+        function openActivity(activity) {
+            const modal = document.getElementById('activity-modal');
+            const title = document.getElementById('modal-title');
+            const body = document.getElementById('modal-body');
+            
+            title.textContent = activity.title;
+            
+            if (activity.content && activity.content.instructions) {
+                body.innerHTML = activity.content.instructions;
+                
+                // Добавляем интерактивные элементы если нужно
+                if (activity.id === 3) { // Игра с животными
+                    setupAnimalsGame();
+                }
+            } else {
+                body.innerHTML = `
+                    <p>${activity.description}</p>
+                    <p><em>Контент данной активности находится в разработке...</em></p>
+                `;
+            }
+            
+            modal.style.display = 'block';
+            
+            // Отправляем событие в Telegram
+            if (window.Telegram?.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+            }
+        }
+        
+        function setupAnimalsGame() {
+            // Стили для игры с животными
+            const style = document.createElement('style');
+            style.textContent = `
+                .animal-card {
+                    background: var(--tg-theme-secondary-bg-color, #f1f1f1);
+                    border-radius: 12px;
+                    padding: 20px;
+                    text-align: center;
+                    cursor: pointer;
+                    transition: transform 0.2s;
+                    margin: 10px 0;
+                }
+                .animal-card:hover {
+                    transform: scale(1.05);
+                }
+                .animal-card:active {
+                    transform: scale(0.95);
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        function playAnimalSound(animal) {
+            const sounds = {
+                cow: { sound: 'Му-у-у!', emoji: '🐄' }
+            };
+            
+            const animalData = sounds[animal];
+            if (animalData) {
+                // Показываем звук визуально
+                const soundDisplay = document.createElement('div');
+                soundDisplay.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    font-size: 48px;
+                    background: rgba(0,0,0,0.8);
+                    color: white;
+                    padding: 20px;
+                    border-radius: 20px;
+                    z-index: 2000;
+                    animation: soundPulse 1s ease-out;
+                `;
+                soundDisplay.innerHTML = `${animalData.emoji}<br>${animalData.sound}`;
+                
+                // Добавляем CSS анимацию
+                if (!document.querySelector('#sound-animation')) {
+                    const animationStyle = document.createElement('style');
+                    animationStyle.id = 'sound-animation';
+                    animationStyle.textContent = `
+                        @keyframes soundPulse {
+                            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+                            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+                            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+                        }
+                    `;
+                    document.head.appendChild(animationStyle);
+                }
+                
+                document.body.appendChild(soundDisplay);
+                
+                // Убираем через секунду
+                setTimeout(() => {
+                    soundDisplay.remove();
+                }, 1000);
+                
+                // Вибрация если поддерживается
+                if (window.Telegram?.WebApp) {
+                    window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                }
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('activity-modal').style.display = 'none';
+        }
+        
+        function openPremium() {
+            // Отправляем команду боту для открытия меню премиума
+            if (window.Telegram?.WebApp) {
+                window.Telegram.WebApp.sendData('open_premium');
+                window.Telegram.WebApp.close();
+            } else {
+                alert('Для оформления подписки перейдите в Telegram бот');
+            }
+        }
+        
+        // Закрытие модального окна при клике вне его
+        window.addEventListener('click', (e) => {
+            const modal = document.getElementById('activity-modal');
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+        
+        // Обработка кнопки "Назад" Telegram
+        if (window.Telegram?.WebApp) {
+            window.Telegram.WebApp.BackButton.onClick(() => {
+                const modal = document.getElementById('activity-modal');
+                if (modal.style.display === 'block') {
+                    closeModal();
+                    window.Telegram.WebApp.BackButton.hide();
+                } else {
+                    window.Telegram.WebApp.close();
+                }
+            });
+        }
+        
+        // Показ кнопки "Назад" при открытии модального окна
+        function showBackButton() {
+            if (window.Telegram?.WebApp) {
+                window.Telegram.WebApp.BackButton.show();
+            }
+        }
+        
+        function hideBackButton() {
+            if (window.Telegram?.WebApp) {
+                window.Telegram.WebApp.BackButton.hide();
+            }
+        }
+        
+        // Обновляем функцию openActivity
+        const originalOpenActivity = openActivity;
+        openActivity = function(activity) {
+            originalOpenActivity(activity);
+            showBackButton();
+        };
+        
+        // Обновляем функцию closeModal
+        const originalCloseModal = closeModal;
+        closeModal = function() {
+            originalCloseModal();
+            hideBackButton();
+        };
+        
+        // Запуск приложения
+        initApp();
+    </script>
+</body>
+</html>
